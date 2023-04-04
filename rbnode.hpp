@@ -43,5 +43,5 @@ RBNode* RBNode::subling()const{
 }
 
 bool RBNode::has_red_children()const{
-    return RED == left->Color() || RED == right->Color();
+    return (left && RED == left->Color()) || (right && RED == right->Color());
 }

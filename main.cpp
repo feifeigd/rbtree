@@ -21,7 +21,8 @@ int main(){
 
     for(vector<int>::iterator it = keys.begin(); it != keys.end(); ++it){
         int v = *it;
-        // RBNode* z = new RBNode(v);
+        RBNode* z = new RBNode(v);
+        rbtree.Insert(z);
     }
     
     return 0;

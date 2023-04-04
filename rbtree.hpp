@@ -15,9 +15,10 @@ class RBTree{
 public:
     // 查找插入位置
     RBNode* find(int key);
-
-    RBNode* root; // 根节点
+    bool Insert(RBNode* z);
 private:
+    RBNode* root; // 根节点
+
     // 查找插入位置
     RBNode* search(RBNode* parent, RBNode* node, int key);
 
@@ -29,6 +30,8 @@ private:
     bool left_rotate(RBNode* x);
     // 右旋, x的左孩子变成x的父亲，x左孩子的右孩子变成x的左孩子
     bool right_rotate(RBNode* x);
+
+    void insert_fixup(RBNode* z);
 };
 
 void RBTree::transplant(RBNode* u, RBNode* v){
@@ -101,4 +104,63 @@ RBNode* RBTree::search(RBNode* parent, RBNode* node, int key){
 
 RBNode* RBTree::find(int key){
     return search(0, root, key);
+}
+
+bool RBTree::Insert(RBNode* z){
+    if(!z)
+        return false;
+
+    RBNode* y = find(z->key);
+
+    z->p = y;
+    if(!y)
+        root = z;
+    else if(z->key < y->key)
+        y->left = z;
+    else
+        y->right = z;
+
+    z->left = z->right = 0;
+    z->color = RED; // 新插入的节点总是红色
+    insert_fixup(z); // 需要旋转和变色
+    return true;
+}
+
+
+void RBTree::insert_fixup(RBNode* z){
+    while(z->p && RED == z->p->Color()){
+        RBNode* p = z->p;  // z 是红色，则z不是根，所以p肯定不是空
+        RBNode* pp = p->p; // p 是红色，则p不是根，所以pp肯定不是空
+        RBNode* y = z->uncle(); // 叔叔
+
+        if(RED == y->Color()){ // y 是否可能为空?
+            y->color = p->color = BLACK;    // case 1
+            z = pp;                         // case 1 z 爬升2层
+            z->color = RED;                 // case 1
+            
+            continue;
+        }
+
+        // z 爬升一层
+        if(p == pp->left){  // BLACK == y.Color()
+            if(z == p->right){
+                z = p;          // case 2
+                left_rotate(z); // case 2
+            }
+
+            z->p->color = BLACK;    // case 3
+            z->p->p->color = RED;   // case 3
+            right_rotate(z->p->p);  // case 3
+        }else{  // p == pp.right
+            if(z == p->left){
+                z = p;              // case 2;
+                right_rotate(z);    // case 2
+            }
+
+            z->p->color = BLACK;    // case 3
+            z->p->p->color = RED;   // case 3
+            left_rotate(z->p->p);   // case 3
+        }
+    }
+    root->color = BLACK; // 结点总是黑色
 }
