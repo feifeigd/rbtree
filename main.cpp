@@ -25,5 +25,13 @@ int main(){
         rbtree.Insert(z);
     }
     
+    while(!keys.empty()){
+        int idx = rand() % keys.size();
+        vector<int>::iterator it = keys.begin() + idx;
+        int v = *it;
+        RBNode* n = rbtree.find(v);
+        rbtree.Delete(n);
+        keys.erase(it);
+    }
     return 0;
 }

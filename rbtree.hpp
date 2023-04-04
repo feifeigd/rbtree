@@ -16,6 +16,7 @@ public:
     // 查找插入位置
     RBNode* find(int key);
     bool Insert(RBNode* z);
+    bool Delete(RBNode* z);
 private:
     RBNode* root; // 根节点
 
@@ -32,6 +33,7 @@ private:
     bool right_rotate(RBNode* x);
 
     void insert_fixup(RBNode* z);
+    void delete_fixup(RBNode* x);
 };
 
 void RBTree::transplant(RBNode* u, RBNode* v){
@@ -163,4 +165,99 @@ void RBTree::insert_fixup(RBNode* z){
         }
     }
     root->color = BLACK; // 结点总是黑色
+}
+
+bool RBTree::Delete(RBNode* z){
+    if(!z)
+        return false;
+    // 要删除的节点z的（非空节点或nil）；或者z的后继的右孩子
+    RBNode* x = 0;
+    // 确定要删除的节点y或者是要移动的z的后继
+	RBNode*y = z; // 当z至多只有一个子女的时候，y指向z；否则y指向z的后继
+    RBColor y_original_color = y->Color();
+    // z至多只有一个子女
+	if(!z->left){
+		x = z->right;
+		transplant(y, x); // 孩子取代待删节点的位置, y=z
+	} else if(!z->right){
+		x = z->left;
+		transplant(y, x); // 孩子取代待删节点的位置,y=z
+	} else { // z有两个孩子
+		y = z->Successor();            // z有两个子女, z的后继y至多也只有一个子女
+		y_original_color = y->Color(); // y 变了，重新赋值
+		x = y->right;                  // x 是y的右孩子或者nil
+		if(y->p != z){
+			transplant(y, x);
+			y->right = z->right;
+			y->right->p = y;
+		}
+		// y取代z的位置和颜色
+		transplant(z, y);
+		y->left = z->left;
+		y->left->p = y;
+		y->color = z->color;
+	}
+
+	if(BLACK == y_original_color) { // 删除红色节点，红黑性质不变
+		delete_fixup(x);
+	}
+}
+
+void RBTree::delete_fixup(RBNode* x){
+    if(!x)
+        return;
+    while(x != root && BLACK == x->Color()){
+		RBNode*p = x->p;
+		if (x == p->left) {
+			RBNode* w = p->right; // x 的兄弟
+			if (RED == w->Color()) {
+				w->color = BLACK;  // case 1
+				p->color = RED;    // case 1
+				left_rotate(p); // case 1
+				w = p->right;      // case 1
+			}
+			if (BLACK == w->left->Color() && BLACK == w->right->Color()) {
+				w->color = RED; // case 2
+				x = p;         // case 2，爬升一级，会引起继续循环
+			} else { // 至少有一个红色的孩子
+				if (BLACK == w->right->Color()) { // w 左红，右黑
+					swap_color(w, w->left); // case 3
+					right_rotate(w);        // case 3
+					w = p->right;           // case 3
+				}
+				// w是黑色，左右两个孩子都是红色
+				w->color = p->Color();      // case 4
+				p->color = BLACK;           // case 4
+				w->right->color = BLACK;    // case 4
+				left_rotate(p);             // case 4
+				x = root;                   // case 4，终止循环
+			}
+		} else {
+			RBNode* w = p->left; // x 的兄弟
+			if (RED == w->Color()) {
+				w->color = BLACK;   // case 1
+				p->color = RED;     // case 1
+				right_rotate(p); // case 1
+				w = p->left;        // case 1
+			}
+			if (BLACK == w->left->Color() && BLACK == w->right->Color()) {
+				w->color = RED; // case 2
+				x = p;         // case 2，爬升一级，会引起继续循环
+			} else { // 至少有一个红色的孩子
+				if (BLACK == w->left->Color()) { // w 左红，右黑
+					swap_color(w, w->right); // case 3
+					left_rotate(w);       // case 3
+					w = p->left;             // case 3
+				}
+				// w是黑色，左右两个孩子都是红色
+				w->color = p->Color();  // case 4
+				p->color = BLACK;      // case 4
+				w->left->color = BLACK; // case 4
+				right_rotate(p);    // case 4
+				x = root;           // case 4，终止循环
+			}
+		}
+
+    }
+    x->color = BLACK;
 }
